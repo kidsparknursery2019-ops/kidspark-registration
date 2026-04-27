@@ -21,6 +21,10 @@
 label{display:block;font-weight:700;font-size:15px;margin-bottom:7px}.req{color:#d93025}
 input,select,textarea{width:100%;border:0;border-bottom:1.8px solid #ddd;padding:10px 2px;font-family:Tajawal,Arial,sans-serif;font-size:16px;background:#fff;outline:none}
 textarea{border:1.5px solid #ddd;border-radius:8px;padding:10px;min-height:80px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--g2)}
+.lang-options{display:flex;flex-direction:column;gap:13px;margin-top:10px}
+.lang-option{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:500;cursor:pointer;line-height:1.4}
+.lang-option input[type=radio]{width:22px;height:22px;accent-color:var(--g2);margin:0;flex:0 0 auto}
+.lang-other-input{width:min(360px,100%);margin-inline-start:10px;padding:6px 2px;font-size:15px}
 .hint{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}.actions{display:flex;gap:10px;justify-content:flex-start;margin-top:18px;align-items:center;flex-wrap:wrap}
 button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sans-serif;font-size:16px;font-weight:800;cursor:pointer}
 .primary{background:var(--g2);color:#fff}.secondary{background:#fff;color:var(--g1);border:1.5px solid var(--g2)}
@@ -240,11 +244,23 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
         <option value="هندوراس">هندوراس - Honduras</option>
         <option value="هولندا">هولندا - Netherlands</option>
       </select><div class="hint">تظهر القائمة بالعربي والإنجليزي، لكن تُحفظ الجنسية بالعربي فقط داخل النظام.</div></div>
-      <div><label>رقم الهوية | Emirates ID <span class="req">*</span></label><input name="emiratesId" dir="ltr" required></div>
+      <div><label>رقم الهوية | Emirates ID <span class="req">*</span></label><input name="emiratesId" dir="ltr" inputmode="numeric" maxlength="15" pattern="[0-9]{15}" title="رقم الهوية يجب أن يكون 15 رقم بالضبط" required><div class="hint">يجب إدخال 15 رقم بالضبط بدون مسافات أو شرطات.</div></div>
       <div><label>رقم جواز السفر | Passport No</label><input name="passport" dir="ltr"></div>
       <div><label>الديانة | Religion</label><input name="religion"></div>
-      <div><label>اللغة الأم | Mother Tongue</label><input name="motherTongue"></div>
-      <div><label>لغات أخرى | Other Languages</label><input name="otherLanguages"></div>
+      <div class="full"><label>اللغة الأم | Mother Tongue <span class="req">*</span></label><div class="lang-options">
+        <label class="lang-option"><input type="radio" name="motherTongue" value="عربي" required> عربي</label>
+        <label class="lang-option"><input type="radio" name="motherTongue" value="English" required> English</label>
+        <label class="lang-option"><input type="radio" name="motherTongue" value="French" required> French</label>
+        <label class="lang-option"><input type="radio" name="motherTongue" value="Urdu\Hindi" required> Urdu\Hindi</label>
+        <label class="lang-option"><input type="radio" name="motherTongue" value="Other" data-other-target="motherTongueOther" required> Other: <input class="lang-other-input" id="motherTongueOther" name="motherTongueOther" type="text" aria-label="Other mother tongue"></label>
+      </div></div>
+      <div class="full"><label>لغات أخرى | Other Languages (اختياري | Optional)</label><div class="lang-options">
+        <label class="lang-option"><input type="radio" name="otherLanguages" value="عربي"> عربي</label>
+        <label class="lang-option"><input type="radio" name="otherLanguages" value="English"> English</label>
+        <label class="lang-option"><input type="radio" name="otherLanguages" value="French"> French</label>
+        <label class="lang-option"><input type="radio" name="otherLanguages" value="Urdu\Hindi"> Urdu\Hindi</label>
+        <label class="lang-option"><input type="radio" name="otherLanguages" value="Other" data-other-target="otherLanguagesOther"> Other: <input class="lang-other-input" id="otherLanguagesOther" name="otherLanguagesOther" type="text" aria-label="Other languages"></label>
+      </div></div>
       <div class="full"><label>العنوان التفصيلي | Detailed Address <span class="req">*</span></label><textarea name="addr" required></textarea></div>
     </div></div>
 
@@ -256,7 +272,13 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
       <div><label>المهنة | Occupation</label><input name="momJob"></div>
       <div><label>جهة العمل | Work Location</label><input name="momWork"></div>
       <div><label>البريد الإلكتروني | E-mail</label><input type="email" name="momEmail" dir="ltr"></div>
-      <div><label>اللغة الأم | Mother Tongue</label><input name="momMotherTongue"></div>
+      <div class="full"><label>اللغة الأم | Mother Tongue</label><div class="lang-options">
+        <label class="lang-option"><input type="radio" name="momMotherTongue" value="عربي"> عربي</label>
+        <label class="lang-option"><input type="radio" name="momMotherTongue" value="English"> English</label>
+        <label class="lang-option"><input type="radio" name="momMotherTongue" value="French"> French</label>
+        <label class="lang-option"><input type="radio" name="momMotherTongue" value="Urdu\Hindi"> Urdu\Hindi</label>
+        <label class="lang-option"><input type="radio" name="momMotherTongue" value="Other" data-other-target="momMotherTongueOther"> Other: <input class="lang-other-input" id="momMotherTongueOther" name="momMotherTongueOther" type="text" aria-label="Other mother tongue"></label>
+      </div></div>
     </div></div>
 
     <div class="card"><div class="sec">بيانات الأب | Father Information</div><div class="body grid">
@@ -267,7 +289,13 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
       <div><label>المهنة | Occupation</label><input name="dadJob"></div>
       <div><label>جهة العمل | Work Location</label><input name="dadWork"></div>
       <div><label>البريد الإلكتروني | E-mail</label><input type="email" name="dadEmail" dir="ltr"></div>
-      <div><label>اللغة الأم | Mother Tongue</label><input name="dadMotherTongue"></div>
+      <div class="full"><label>اللغة الأم | Mother Tongue</label><div class="lang-options">
+        <label class="lang-option"><input type="radio" name="dadMotherTongue" value="عربي"> عربي</label>
+        <label class="lang-option"><input type="radio" name="dadMotherTongue" value="English"> English</label>
+        <label class="lang-option"><input type="radio" name="dadMotherTongue" value="French"> French</label>
+        <label class="lang-option"><input type="radio" name="dadMotherTongue" value="Urdu\Hindi"> Urdu\Hindi</label>
+        <label class="lang-option"><input type="radio" name="dadMotherTongue" value="Other" data-other-target="dadMotherTongueOther"> Other: <input class="lang-other-input" id="dadMotherTongueOther" name="dadMotherTongueOther" type="text" aria-label="Other mother tongue"></label>
+      </div></div>
     </div></div>
 
     <div class="card"><div class="sec">الطوارئ والصحة | Emergency & Medical</div><div class="body grid">
@@ -302,6 +330,7 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
+const STORAGE_BUCKETS = ['kids-park-nursery.firebasestorage.app', 'kids-park-nursery.appspot.com'];
 
 function formToObject(form) {
   const fd = new FormData(form);
@@ -313,7 +342,16 @@ function formToObject(form) {
   obj.status = 'pending';
   obj.source = 'parent_registration_link';
   obj.userAgent = navigator.userAgent;
+  normalizeOtherLanguageFields(obj);
   return obj;
+}
+
+function normalizeOtherLanguageFields(obj) {
+  ['motherTongue','otherLanguages','momMotherTongue','dadMotherTongue'].forEach(name => {
+    const other = (obj[name + 'Other'] || '').trim();
+    if (obj[name] === 'Other' && other) obj[name] = other;
+    delete obj[name + 'Other'];
+  });
 }
 
 function compressImage(file, maxW=1200, quality=.72) {
@@ -338,11 +376,62 @@ function compressImage(file, maxW=1200, quality=.72) {
   });
 }
 
+function fileToCompressedBlob(file, maxW=1200, quality=.72) {
+  return new Promise((resolve, reject) => {
+    if (!file) return resolve(null);
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Image compression failed')), 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function safeFileName(name) {
+  return String(name || 'image').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-80);
+}
+
+async function uploadToFirebaseStorage(file, key, requestId) {
+  const blob = await fileToCompressedBlob(file);
+  const path = `registrationRequests/${requestId}/${key}_${Date.now()}_${safeFileName(file.name || 'image.jpg')}.jpg`;
+  let lastError = null;
+  for (const bucket of STORAGE_BUCKETS) {
+    try {
+      const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(path)}`;
+      const res = await fetch(url, { method:'POST', headers:{'Content-Type':'image/jpeg'}, body: blob });
+      if (!res.ok) throw new Error(`Storage upload failed ${bucket}: HTTP ${res.status}`);
+      const data = await res.json();
+      const token = data.downloadTokens || (data.metadata && data.metadata.firebaseStorageDownloadTokens) || '';
+      return token
+        ? `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media&token=${encodeURIComponent(token)}`
+        : `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
+    } catch (err) { lastError = err; }
+  }
+  throw lastError || new Error('Storage upload failed');
+}
+
 async function collectImages(obj) {
   const inputs = Array.from(document.querySelectorAll('input[type=file][data-img]'));
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+  obj.requestId = requestId;
+  obj.imageStorage = true;
+  obj.imageUrls = {};
   for (const input of inputs) {
     if (input.files && input.files[0]) {
-      obj[input.dataset.img] = await compressImage(input.files[0]);
+      const url = await uploadToFirebaseStorage(input.files[0], input.dataset.img, requestId);
+      obj[input.dataset.img] = url;
+      obj.imageUrls[input.dataset.img] = url;
     }
   }
   return obj;
@@ -356,6 +445,12 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
   ok.style.display = 'none'; err.style.display = 'none';
   btn.classList.add('disabled'); btn.textContent = '⏳ جاري الإرسال...';
   try {
+    const emiratesInput = this.querySelector('[name=emiratesId]');
+    const emiratesValue = (emiratesInput.value || '').trim();
+    if (!/^\d{15}$/.test(emiratesValue)) {
+      emiratesInput.focus();
+      throw new Error('رقم الهوية يجب أن يكون 15 رقم بالضبط');
+    }
     let payload = formToObject(this);
     payload = await collectImages(payload);
     const res = await fetch(REQUESTS_URL + '.json', {
@@ -369,6 +464,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(ex) {
     console.error(ex);
+    err.textContent = ex && ex.message ? ex.message : 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.';
     err.style.display = 'block';
   } finally {
     btn.classList.remove('disabled'); btn.textContent = 'إرسال الطلب | Submit';

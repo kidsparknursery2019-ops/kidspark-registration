@@ -43,15 +43,16 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
     <div class="card"><div class="sec">بيانات الطفل | Child Information</div><div class="body grid">
       <div><label>إسم الطفل | Child Name <span class="req">*</span></label><input name="firstName" required></div>
       <div><label>إسم العائلة | Family Name <span class="req">*</span></label><input name="familyName" required></div>
+      <div class="full"><label>اسم الطفل باللغة الإنجليزية | Child Name in English <span class="req">*</span></label><input name="childNameEnglish" dir="ltr" required></div>
       <div><label>تاريخ الميلاد | Date of Birth <span class="req">*</span></label><input type="date" name="dob" required></div>
       <div><label>الجنس | Gender <span class="req">*</span></label><select name="gen" required><option value="">اختيار</option><option>ذكر</option><option>انثى</option></select></div>
-      <div><label>الجنسية | Nationality</label><input name="nat"></div>
-      <div><label>رقم الهوية | Emirates ID</label><input name="emiratesId" dir="ltr"></div>
+      <div><label>الجنسية | Nationality <span class="req">*</span></label><input name="nat" required></div>
+      <div><label>رقم الهوية | Emirates ID <span class="req">*</span></label><input name="emiratesId" dir="ltr" required></div>
       <div><label>رقم جواز السفر | Passport No</label><input name="passport" dir="ltr"></div>
       <div><label>الديانة | Religion</label><input name="religion"></div>
       <div><label>اللغة الأم | Mother Tongue</label><input name="motherTongue"></div>
       <div><label>لغات أخرى | Other Languages</label><input name="otherLanguages"></div>
-      <div class="full"><label>العنوان التفصيلي | Detailed Address</label><textarea name="addr"></textarea></div>
+      <div class="full"><label>العنوان التفصيلي | Detailed Address <span class="req">*</span></label><textarea name="addr" required></textarea></div>
     </div></div>
 
     <div class="card"><div class="sec">بيانات الأم | Mother Information</div><div class="body grid">
@@ -77,22 +78,25 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
     </div></div>
 
     <div class="card"><div class="sec">الطوارئ والصحة | Emergency & Medical</div><div class="body grid">
-      <div><label>اسم قريب للطوارئ | Emergency Contact</label><input name="emergName"></div>
-      <div><label>صلة القرابة | Relationship</label><input name="emergRel"></div>
-      <div><label>رقم الموبايل | Mobile Number</label><input name="emergMob" dir="ltr"></div>
-      <div><label>هل يعاني الطفل من مرض معدي؟</label><select name="contagious"><option>لا</option><option>نعم</option></select></div>
-      <div><label>هل خضع لعملية/حادث خطير؟</label><select name="surgical"><option>لا</option><option>نعم</option></select></div>
-      <div><label>هل لديه حساسية؟</label><select name="allergy"><option>لا</option><option>نعم</option></select></div>
-      <div class="full"><label>تفاصيل صحية أو حساسية | Medical Notes</label><textarea name="allergyNote"></textarea></div>
+      <div><label>اسم قريب للطوارئ | Emergency Contact <span class="req">*</span></label><input name="emergName" required></div>
+      <div><label>صلة القرابة | Relationship <span class="req">*</span></label><input name="emergRel" required></div>
+      <div><label>رقم الموبايل | Mobile Number <span class="req">*</span></label><input name="emergMob" dir="ltr" required></div>
+      <div><label>هل يعاني الطفل من مرض معدي؟ <span class="req">*</span></label><select name="contagious" required><option value="">اختيار</option><option>لا</option><option>نعم</option></select></div>
+      <div><label>هل خضع لعملية/حادث خطير؟ <span class="req">*</span></label><select name="surgical" required><option value="">اختيار</option><option>لا</option><option>نعم</option></select></div>
+      <div><label>هل لديه حساسية؟ <span class="req">*</span></label><select name="allergy" required><option value="">اختيار</option><option>لا</option><option>نعم</option></select></div>
+      <div class="full"><label>تفاصيل صحية أو حساسية | Medical Notes <span class="req">*</span></label><textarea name="allergyNote" required></textarea></div>
     </div></div>
 
     <div class="card"><div class="sec">الموافقات والوثائق | Consents & Documents</div><div class="body grid">
       <div><label>أوافق على تصوير طفلي لتوثيق أنشطة الحضانة</label><select name="photoConsent"><option>نعم</option><option>لا</option></select></div>
       <div><label>أوافق على نشر الصور في وسائل التواصل</label><select name="socialConsent"><option>لا</option><option>نعم</option></select></div>
-      <div><label>صورة الطفل | Child Photo</label><input type="file" accept="image/*" data-img="imgChildPhoto"><div class="hint">اختياري — سيتم ضغط الصورة تلقائياً</div></div>
-      <div><label>الهوية الإماراتية | Emirates ID</label><input type="file" accept="image/*" data-img="imgEmiratesId"></div>
-      <div><label>شهادة التطعيم | Vaccination Card</label><input type="file" accept="image/*" data-img="imgVaccination"></div>
-      <div><label>شهادة الميلاد | Birth Certificate</label><input type="file" accept="image/*" data-img="imgBirthCert"></div>
+      <div><label>صورة الطفل | Child Photo <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgChildPhoto" required><div class="hint">إلزامي — سيتم ضغط الصورة تلقائياً</div></div>
+      <div><label>الهوية الإماراتية للطفل | Child Emirates ID <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgEmiratesId" required></div>
+      <div><label>شهادة التطعيم | Vaccination Card <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgVaccination" required></div>
+      <div><label>شهادة الميلاد | Birth Certificate <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgBirthCert" required></div>
+      <div><label>صورة جواز سفر الطفل | Child Passport Copy <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgChildPassport" required></div>
+      <div><label>صورة هوية الأب | Father Emirates ID <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgFatherEmiratesId" required></div>
+      <div><label>صورة جواز سفر الأب | Father Passport Copy <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgFatherPassport" required></div>
       <div class="full"><label>ملاحظات إضافية | Comments</label><textarea name="notes"></textarea></div>
       <div class="full small">بالضغط على إرسال، أقرّ بصحة البيانات وأوافق على إرسال الطلب إلى حضانة حديقة الأطفال لمراجعته.</div>
       <div class="full actions"><button type="submit" class="primary" id="submitBtn">إرسال الطلب | Submit</button><button type="reset" class="secondary">مسح النموذج</button></div>

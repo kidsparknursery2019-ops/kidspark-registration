@@ -330,8 +330,6 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
-const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
-const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
 
 function formToObject(form) {
   const fd = new FormData(form);
@@ -417,7 +415,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     this.reset();
-alert('تم إرسال الطلب بنجاح\nRegistration submitted successfully');
+    alert('✅ تم إرسال طلب التسجيل بنجاح\n✅ Registration submitted successfully');
     ok.style.display = 'block';
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(ex) {

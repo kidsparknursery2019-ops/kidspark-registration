@@ -31,6 +31,17 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 .msg{padding:12px 14px;border-radius:9px;display:none;margin-top:14px;font-weight:700}.ok{background:#e3f5e9;color:#0e5e30}.err{background:#fde0de;color:#a0231a}
 .small{font-size:13px;color:var(--muted);line-height:1.7}.disabled{opacity:.6;pointer-events:none}
 @media(max-width:650px){.grid{grid-template-columns:1fr}.hero h1{font-size:24px}.banner{width:92%;height:125px}.logo{width:105px;height:105px}}
+
+.success-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:99999;display:none;align-items:center;justify-content:center;padding:18px}
+.success-popup-box{background:#fff;border-radius:18px;max-width:420px;width:100%;text-align:center;padding:28px 22px;box-shadow:0 18px 60px rgba(0,0,0,.25);border-top:8px solid var(--g2)}
+.success-popup-icon{font-size:48px;margin-bottom:10px}
+.success-popup-title{font-size:22px;font-weight:900;color:var(--g1);margin-bottom:6px}
+.success-popup-sub{font-size:17px;font-weight:800;color:#1e6b3f;margin-bottom:14px;direction:ltr}
+.success-popup-text{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:18px}
+.success-popup-btn{background:var(--g2);color:#fff;border:0;border-radius:10px;padding:12px 26px;font-family:Tajawal,Arial,sans-serif;font-size:16px;font-weight:900;cursor:pointer}
+.success-popup-error{border-top-color:var(--r)}
+.success-popup-error .success-popup-title{color:var(--r)}
+.success-popup-error .success-popup-btn{background:var(--r)}
 </style>
 </head>
 <body>
@@ -327,9 +338,39 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
   </form>
 </div>
 
+<div class="success-popup-overlay" id="successPopup">
+  <div class="success-popup-box" id="successPopupBox">
+    <div class="success-popup-icon" id="successPopupIcon">✅</div>
+    <div class="success-popup-title" id="successPopupTitle">تم إرسال الطلب بنجاح</div>
+    <div class="success-popup-sub" id="successPopupSub">Registration submitted successfully</div>
+    <div class="success-popup-text" id="successPopupText">تم استلام طلب التسجيل وسيظهر في نظام الحضانة للمراجعة.</div>
+    <button type="button" class="success-popup-btn" onclick="hideSubmitPopup()">حسناً | OK</button>
+  </div>
+</div>
+
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
+
+function showSubmitPopup(type, titleAr, titleEn, textAr) {
+  const overlay = document.getElementById('successPopup');
+  const box = document.getElementById('successPopupBox');
+  const icon = document.getElementById('successPopupIcon');
+  const title = document.getElementById('successPopupTitle');
+  const sub = document.getElementById('successPopupSub');
+  const txt = document.getElementById('successPopupText');
+  if (!overlay) return alert((titleAr || '') + '\n' + (titleEn || ''));
+  box.classList.toggle('success-popup-error', type === 'error');
+  icon.textContent = type === 'error' ? '⚠️' : '✅';
+  title.textContent = titleAr;
+  sub.textContent = titleEn;
+  txt.textContent = textAr || '';
+  overlay.style.display = 'flex';
+}
+function hideSubmitPopup(){
+  const overlay = document.getElementById('successPopup');
+  if (overlay) overlay.style.display = 'none';
+}
 
 function formToObject(form) {
   const fd = new FormData(form);
@@ -353,7 +394,7 @@ function normalizeOtherLanguageFields(obj) {
   });
 }
 
-function compressImage(file, maxW=900, quality=.58) {
+function compressImage(file, maxW=650, quality=.42) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve('');
     const reader = new FileReader();
@@ -367,24 +408,24 @@ function compressImage(file, maxW=900, quality=.58) {
         canvas.getContext('2d').drawImage(img,0,0,w,h);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
-      img.onerror = reject;
+      img.onerror = () => reject(new Error('تعذر قراءة إحدى الصور، يرجى اختيار صورة أخرى'));
       img.src = e.target.result;
     };
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error('تعذر قراءة إحدى الصور، يرجى المحاولة مرة أخرى'));
     reader.readAsDataURL(file);
   });
 }
 
-async function collectImages(obj) {
+async function collectImages(obj, requestId) {
   const inputs = Array.from(document.querySelectorAll('input[type=file][data-img]'));
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
   obj.requestId = requestId;
+  obj.firebaseKey = requestId;
   obj.imageStorage = false;
   obj.imageMode = 'base64_compressed';
   obj.imageUrls = {};
   for (const input of inputs) {
     if (input.files && input.files[0]) {
-      const dataUrl = await compressImage(input.files[0], 900, .58);
+      const dataUrl = await compressImage(input.files[0], 650, .42);
       obj[input.dataset.img] = dataUrl;
       obj.imageUrls[input.dataset.img] = dataUrl;
     }
@@ -406,27 +447,36 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
       emiratesInput.focus();
       throw new Error('رقم الهوية يجب أن يكون 15 رقم بالضبط');
     }
+    const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
     let payload = formToObject(this);
-    payload = await collectImages(payload);
-    const res = await fetch(REQUESTS_URL + '.json', {
-      method: 'POST',
+    payload = await collectImages(payload, requestId);
+    const saveUrl = REQUESTS_URL + '/' + encodeURIComponent(requestId) + '.json';
+    const res = await fetch(saveUrl, {
+      method: 'PUT',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      cache: 'no-store'
     });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
+    if (!res.ok) {
+      const details = await res.text().catch(()=> '');
+      throw new Error('تعذر الحفظ في Firebase: HTTP ' + res.status + (details ? ' - ' + details.slice(0,120) : ''));
+    }
+    await res.json().catch(()=>null);
     this.reset();
-    alert('✅ تم إرسال طلب التسجيل بنجاح\n✅ Registration submitted successfully');
+    ok.textContent = '✅ تم إرسال طلب التسجيل بنجاح | Registration submitted successfully';
     ok.style.display = 'block';
+    showSubmitPopup('success','تم إرسال الطلب بنجاح','Registration submitted successfully','تم استلام طلب التسجيل وسيظهر في نظام الحضانة ضمن طلبات التسجيل الجديدة.');
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(ex) {
     console.error(ex);
-    err.textContent = ex && ex.message ? ex.message : 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.';
+    const msg = ex && ex.message ? ex.message : 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.';
+    err.textContent = msg;
     err.style.display = 'block';
+    showSubmitPopup('error','تعذر إرسال الطلب','Submission failed', msg);
   } finally {
     btn.classList.remove('disabled'); btn.textContent = 'إرسال الطلب | Submit';
   }
 });
 </script>
-
 </body>
 </html>

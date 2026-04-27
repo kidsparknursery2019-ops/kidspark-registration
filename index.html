@@ -311,7 +311,7 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
     <div class="card"><div class="sec">الموافقات والوثائق | Consents & Documents</div><div class="body grid">
       <div><label>أوافق على تصوير طفلي لتوثيق أنشطة الحضانة</label><select name="photoConsent"><option>نعم</option><option>لا</option></select></div>
       <div><label>أوافق على نشر الصور في وسائل التواصل</label><select name="socialConsent"><option>لا</option><option>نعم</option></select></div>
-      <div><label>صورة الطفل | Child Photo <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgChildPhoto" required><div class="hint">إلزامي — سيتم ضغط الصورة تلقائياً</div></div>
+      <div><label>صورة الطفل | Child Photo <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgChildPhoto" required><div class="hint">إلزامي — سيتم ضغط الصورة وحفظها داخل الطلب بدون Firebase Storage</div></div>
       <div><label>الهوية الإماراتية للطفل | Child Emirates ID <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgEmiratesId" required></div>
       <div><label>شهادة التطعيم | Vaccination Card <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgVaccination" required></div>
       <div><label>شهادة الميلاد | Birth Certificate <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgBirthCert" required></div>
@@ -330,7 +330,8 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
-const STORAGE_BUCKETS = ['kids-park-nursery.firebasestorage.app', 'kids-park-nursery.appspot.com'];
+const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
+const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
 
 function formToObject(form) {
   const fd = new FormData(form);
@@ -354,7 +355,7 @@ function normalizeOtherLanguageFields(obj) {
   });
 }
 
-function compressImage(file, maxW=1200, quality=.72) {
+function compressImage(file, maxW=900, quality=.58) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve('');
     const reader = new FileReader();
@@ -376,62 +377,18 @@ function compressImage(file, maxW=1200, quality=.72) {
   });
 }
 
-function fileToCompressedBlob(file, maxW=1200, quality=.72) {
-  return new Promise((resolve, reject) => {
-    if (!file) return resolve(null);
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        let w = img.width, h = img.height;
-        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Image compression failed')), 'image/jpeg', quality);
-      };
-      img.onerror = reject;
-      img.src = e.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-function safeFileName(name) {
-  return String(name || 'image').replace(/[^a-zA-Z0-9._-]+/g, '_').slice(-80);
-}
-
-async function uploadToFirebaseStorage(file, key, requestId) {
-  const blob = await fileToCompressedBlob(file);
-  const path = `registrationRequests/${requestId}/${key}_${Date.now()}_${safeFileName(file.name || 'image.jpg')}.jpg`;
-  let lastError = null;
-  for (const bucket of STORAGE_BUCKETS) {
-    try {
-      const url = `https://firebasestorage.googleapis.com/v0/b/${bucket}/o?uploadType=media&name=${encodeURIComponent(path)}`;
-      const res = await fetch(url, { method:'POST', headers:{'Content-Type':'image/jpeg'}, body: blob });
-      if (!res.ok) throw new Error(`Storage upload failed ${bucket}: HTTP ${res.status}`);
-      const data = await res.json();
-      const token = data.downloadTokens || (data.metadata && data.metadata.firebaseStorageDownloadTokens) || '';
-      return token
-        ? `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media&token=${encodeURIComponent(token)}`
-        : `https://firebasestorage.googleapis.com/v0/b/${bucket}/o/${encodeURIComponent(path)}?alt=media`;
-    } catch (err) { lastError = err; }
-  }
-  throw lastError || new Error('Storage upload failed');
-}
-
 async function collectImages(obj) {
   const inputs = Array.from(document.querySelectorAll('input[type=file][data-img]'));
   const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
   obj.requestId = requestId;
-  obj.imageStorage = true;
+  obj.imageStorage = false;
+  obj.imageMode = 'base64_compressed';
   obj.imageUrls = {};
   for (const input of inputs) {
     if (input.files && input.files[0]) {
-      const url = await uploadToFirebaseStorage(input.files[0], input.dataset.img, requestId);
-      obj[input.dataset.img] = url;
-      obj.imageUrls[input.dataset.img] = url;
+      const dataUrl = await compressImage(input.files[0], 900, .58);
+      obj[input.dataset.img] = dataUrl;
+      obj.imageUrls[input.dataset.img] = dataUrl;
     }
   }
   return obj;
@@ -460,6 +417,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     this.reset();
+alert('تم إرسال الطلب بنجاح\nRegistration submitted successfully');
     ok.style.display = 'block';
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(ex) {
@@ -471,5 +429,6 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
   }
 });
 </script>
+
 </body>
 </html>

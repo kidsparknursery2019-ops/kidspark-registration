@@ -351,6 +351,7 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
+const REGISTRATION_EMAIL_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzTC3mIabR7mmrSX-hUxezR3hdiZ7vrQ7kx5VGNeHtcUMIZfrXAWhT6slarp2MJnOQoyw/exec';
 
 function showSubmitPopup(type, titleAr, titleEn, textAr) {
   const overlay = document.getElementById('successPopup');
@@ -433,6 +434,33 @@ async function collectImages(obj, requestId) {
   return obj;
 }
 
+async function sendRegistrationEmailNotification(payload) {
+  // إشعار مستقل بعد نجاح حفظ الطلب في Firebase. لا يرسل الصور حتى لا يصبح الطلب ثقيلاً.
+  if (!REGISTRATION_EMAIL_WEBAPP_URL) return;
+  const emailPayload = {
+    requestId: payload.requestId || payload.firebaseKey || '',
+    childName: payload.firstName || payload.name || '',
+    familyName: payload.familyName || '',
+    motherName: payload.mom || payload.motherName || '',
+    fatherName: payload.dad || payload.fatherName || '',
+    phone: payload.mph || payload.dph || payload.emergMob || '',
+    submittedAt: payload.submittedAt || payload.timestamp || new Date().toISOString(),
+    source: payload.source || 'parent_registration_link'
+  };
+  try {
+    await fetch(REGISTRATION_EMAIL_WEBAPP_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: {'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(emailPayload),
+      cache: 'no-store'
+    });
+  } catch (notifyError) {
+    // لا نمنع نجاح التسجيل إذا تعذر إرسال الإيميل.
+    console.warn('Registration email notification failed:', notifyError);
+  }
+}
+
 document.getElementById('regForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');
@@ -462,6 +490,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
       throw new Error('تعذر الحفظ في Firebase: HTTP ' + res.status + (details ? ' - ' + details.slice(0,120) : ''));
     }
     await res.json().catch(()=>null);
+    await sendRegistrationEmailNotification(payload);
     this.reset();
     ok.textContent = '✅ تم إرسال طلب التسجيل بنجاح | Registration submitted successfully';
     ok.style.display = 'block';

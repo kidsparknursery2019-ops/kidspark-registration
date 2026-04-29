@@ -412,7 +412,7 @@ function compressImage(file, maxW=650, quality=.42) {
       img.onerror = () => reject(new Error('تعذر قراءة إحدى الصور، يرجى اختيار صورة أخرى'));
       img.src = e.target.result;
     };
-    reader.onerror = () => reject(new Error('تعذر قراءة إحدى الصور، يرجى المحاولة مرة أخرى'));
+    reader.onerror = () => reject(new Error('تعذر قراءة الصورة التالية: {fieldName} — يرجى إعادة رفع هذه الصورة والمحاولة مرة أخرى'));
     reader.readAsDataURL(file);
   });
 }

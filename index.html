@@ -7,7 +7,7 @@
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>حضانة حديقة الأطفال</title>
-<!-- v20260429E-per-record-firebase-source-of-truth -->
+<!-- v20260429F-fast-registration-sync-no-false-offline -->
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800;900&family=Marhey:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
@@ -12238,6 +12238,100 @@ function escapeHtml(x){return String(x||'').replace(/[&<>'"]/g,function(c){retur
   };
 })();
 
+
+/* ============================================================
+   HOTFIX 20260429F — تحسين سرعة طلبات التسجيل وتقليل رسائل offline الكاذبة
+============================================================ */
+(function(){
+  'use strict';
+  var KP_FAST_REG_MS = 20000;
+  var KP_SHEETS_MS   = 75000;
+  var KP_MIN_SILENT_REG_MS = 12000;
+  var kpRegTimer = null;
+  var kpSheetsTimer = null;
+  var kpRegSyncRunning = false;
+  var kpRegLastStarted = 0;
+  var kpConsecutiveCloudFails = 0;
+  var kpLastGoodCloudAt = Date.now();
+
+  window.kpFetchWithTimeout = function(url, options, timeoutMs){
+    options = options || {};
+    timeoutMs = timeoutMs || 12000;
+    if (window.AbortController) {
+      var controller = new AbortController();
+      var t = setTimeout(function(){ try { controller.abort(); } catch(_e){} }, timeoutMs);
+      options.signal = controller.signal;
+      return fetch(url, options).finally(function(){ clearTimeout(t); });
+    }
+    return Promise.race([fetch(url, options), new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, timeoutMs); })]);
+  };
+
+  if (typeof showSyncBadge === 'function' && !window.__kp_quiet_badge_20260429F) {
+    window.__kp_quiet_badge_20260429F = true;
+    var oldBadge = showSyncBadge;
+    showSyncBadge = function(msg){
+      msg = String(msg || '');
+      var looksOffline = msg.indexOf('بدون إنترنت') >= 0 || msg.indexOf('محفوظ محلياً فقط') >= 0;
+      if (looksOffline && navigator.onLine !== false) {
+        kpConsecutiveCloudFails++;
+        if (kpConsecutiveCloudFails < 3) { console.log('Suppressed transient sync warning:', msg); return; }
+        msg = '⚠️ الاتصال بطيء — سيتم إعادة المحاولة تلقائياً';
+      }
+      return oldBadge(msg);
+    };
+  }
+  function kpMarkCloudOk(){ kpConsecutiveCloudFails = 0; kpLastGoodCloudAt = Date.now(); }
+
+  if (typeof window.syncRegistrationRequestsFromFirebase === 'function' && !window.__kp_guard_reg_sync_20260429F) {
+    window.__kp_guard_reg_sync_20260429F = true;
+    var originalRegSync = window.syncRegistrationRequestsFromFirebase;
+    window.syncRegistrationRequestsFromFirebase = async function(options){
+      options = options || {};
+      var now = Date.now();
+      if (options.silent && (now - kpRegLastStarted) < KP_MIN_SILENT_REG_MS) return { skipped:true, reason:'throttled' };
+      if (kpRegSyncRunning) return { skipped:true, reason:'already-running' };
+      kpRegSyncRunning = true; kpRegLastStarted = now;
+      try { var result = await originalRegSync.call(this, options); if (!result || !result.error) kpMarkCloudOk(); return result; }
+      catch(e){ kpConsecutiveCloudFails++; if (!options.silent && typeof showSyncBadge === 'function') showSyncBadge('⚠️ تعذرت مزامنة الطلبات'); return { error: e && e.message ? e.message : String(e) }; }
+      finally { kpRegSyncRunning = false; }
+    };
+  }
+
+  window.startAutoSync = function(){
+    try { clearInterval(autoSyncTimer); } catch(_e){}
+    try { clearInterval(kpRegTimer); } catch(_e){}
+    try { clearInterval(kpSheetsTimer); } catch(_e){}
+    setTimeout(function(){ try { window.syncRegistrationRequestsFromFirebase({ silent:true }); } catch(_e){} }, 600);
+    setTimeout(function(){ try { syncFromGoogleSheets(); } catch(_e){} }, 2500);
+    kpRegTimer = setInterval(function(){ try { window.syncRegistrationRequestsFromFirebase({ silent:true }); } catch(_e){} }, KP_FAST_REG_MS);
+    kpSheetsTimer = setInterval(function(){ try { syncFromGoogleSheets(); } catch(e){ console.log('Sheets sync failed:', e && e.message); } }, KP_SHEETS_MS);
+  };
+
+  window.addEventListener('online', function(){
+    kpConsecutiveCloudFails = 0;
+    if (typeof showSyncBadge === 'function') showSyncBadge('✅ عاد الاتصال — جاري المزامنة');
+    try { window.syncRegistrationRequestsFromFirebase({ silent:true }); } catch(_e){}
+    try { syncFromGoogleSheets(); } catch(_e){}
+  });
+
+  if (typeof checkForUpdates === 'function' && !window.__kp_fast_check_updates_20260429F) {
+    window.__kp_fast_check_updates_20260429F = true;
+    checkForUpdates = async function(){
+      if (firebaseStreamReady) return;
+      if (isSyncing || hasUnsavedChanges || syncTimeout) return;
+      try {
+        var res = await window.kpFetchWithTimeout(FB_URL + '/savedAt.json', { cache:'no-store' }, 9000);
+        var time = await res.json(); kpMarkCloudOk();
+        if (time && time !== lastSavedAt) { await loadFromFirebase(); refreshAllViewsAfterSync(); showSyncBadge('🔄 تم تحديث البيانات تلقائياً'); }
+      } catch(e) { kpConsecutiveCloudFails++; }
+    };
+  }
+
+  window.kpSyncHealth = function(){
+    var rowsCount = null; try { rowsCount = Array.isArray(syncedFormRows) ? syncedFormRows.length : null; } catch(_e){}
+    return { online:navigator.onLine, cloudFails:kpConsecutiveCloudFails, lastGoodCloudSecondsAgo:Math.round((Date.now()-kpLastGoodCloudAt)/1000), registrationSyncRunning:kpRegSyncRunning, registrationIntervalSeconds:KP_FAST_REG_MS/1000, sheetsIntervalSeconds:KP_SHEETS_MS/1000, localRows:rowsCount };
+  };
+})();
 </script>
 </body>
 </html>

@@ -351,7 +351,60 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
+// إشعار الإيميل: يرسل بعد نجاح حفظ الطلب في Firebase، ولا يمنع نجاح التسجيل إذا فشل الإشعار.
 const REGISTRATION_EMAIL_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwTNrM5URX2i_yiP9rDDe-nzyeHPLiH4nEOCgOgooNsThNo_lArf44N0swEq2gyGSli/exec';
+
+async function sendRegistrationEmailNotification(payload) {
+  if (!REGISTRATION_EMAIL_WEBAPP_URL) return;
+  const emailPayload = {
+    requestId: payload.requestId || payload.firebaseKey || '',
+    childName: payload.firstName || payload.childName || payload.name || '',
+    familyName: payload.familyName || '',
+    motherName: payload.momFull || payload.motherName || '',
+    fatherName: payload.dadFull || payload.fatherName || '',
+    motherMobile: payload.momMob || '',
+    fatherMobile: payload.dadMob || '',
+    phone: payload.momMob || payload.dadMob || payload.emergMob || '',
+    submittedAt: payload.submittedAt || payload.timestamp || new Date().toISOString(),
+    source: payload.source || 'parent_registration_link'
+  };
+  try {
+    await new Promise((resolve) => {
+      const iframeName = 'apps_script_email_iframe_' + Date.now();
+      const iframe = document.createElement('iframe');
+      iframe.name = iframeName;
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = REGISTRATION_EMAIL_WEBAPP_URL;
+      form.target = iframeName;
+      form.style.display = 'none';
+
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'payload';
+      input.value = JSON.stringify(emailPayload);
+      form.appendChild(input);
+      document.body.appendChild(form);
+
+      iframe.onload = function(){
+        setTimeout(function(){
+          try { form.remove(); iframe.remove(); } catch(e) {}
+          resolve();
+        }, 350);
+      };
+      form.submit();
+      setTimeout(function(){
+        try { form.remove(); iframe.remove(); } catch(e) {}
+        resolve();
+      }, 3500);
+    });
+  } catch (notifyError) {
+    console.warn('Registration email notification failed:', notifyError);
+  }
+}
 
 function showSubmitPopup(type, titleAr, titleEn, textAr) {
   const overlay = document.getElementById('successPopup');
@@ -434,59 +487,6 @@ async function collectImages(obj, requestId) {
   return obj;
 }
 
-async function sendRegistrationEmailNotification(payload) {
-  // إشعار مستقل بعد نجاح حفظ الطلب في Firebase. لا نرسل الصور حتى لا يصبح الطلب ثقيلاً.
-  // يستخدم iframe + form لتجنب مشاكل CORS مع Google Apps Script على الموبايل والمتصفحات.
-  if (!REGISTRATION_EMAIL_WEBAPP_URL) return;
-  const emailPayload = {
-    requestId: payload.requestId || payload.firebaseKey || '',
-    childName: payload.firstName || payload.name || '',
-    familyName: payload.familyName || '',
-    motherName: payload.mom || payload.motherName || '',
-    fatherName: payload.dad || payload.fatherName || '',
-    phone: payload.mph || payload.dph || payload.emergMob || '',
-    submittedAt: payload.submittedAt || payload.timestamp || new Date().toISOString(),
-    source: payload.source || 'parent_registration_link'
-  };
-  try {
-    await new Promise((resolve) => {
-      const iframeName = 'apps_script_email_iframe_' + Date.now();
-      const iframe = document.createElement('iframe');
-      iframe.name = iframeName;
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = REGISTRATION_EMAIL_WEBAPP_URL;
-      form.target = iframeName;
-      form.style.display = 'none';
-
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'payload';
-      input.value = JSON.stringify(emailPayload);
-      form.appendChild(input);
-      document.body.appendChild(form);
-
-      iframe.onload = function(){
-        setTimeout(function(){
-          try { form.remove(); iframe.remove(); } catch(e) {}
-          resolve();
-        }, 350);
-      };
-      form.submit();
-      // لا نوقف نجاح التسجيل حتى لو لم يرجع iframe بسبب سياسة المتصفح.
-      setTimeout(function(){
-        try { form.remove(); iframe.remove(); } catch(e) {}
-        resolve();
-      }, 3500);
-    });
-  } catch (notifyError) {
-    // لا نمنع نجاح التسجيل إذا تعذر إرسال الإيميل.
-    console.warn('Registration email notification failed:', notifyError);
-  }
-}
 document.getElementById('regForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');

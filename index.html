@@ -351,7 +351,7 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <script>
 const FB_URL = 'https://kids-park-nursery-default-rtdb.firebaseio.com/nursery_data';
 const REQUESTS_URL = FB_URL + '/registrationRequests/pending';
-const REGISTRATION_EMAIL_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwTNrM5URX2i_yiP9rDDe-nzyeHPLiH4nEOCgOgooNsThNo_lArf44N0swEq2gyGSli/exec';
+const REGISTRATION_EMAIL_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxFxleZwK8be31Pk68Pzcj1WeZYpWd5gOiuuIBWZHo6J_uUVJygZES6G2qqZ97uuAqvcg/exec';
 
 function showSubmitPopup(type, titleAr, titleEn, textAr) {
   const overlay = document.getElementById('successPopup');
@@ -438,26 +438,13 @@ async function sendRegistrationEmailNotification(payload) {
   // إشعار مستقل بعد نجاح حفظ الطلب في Firebase. لا نرسل الصور حتى لا يصبح الطلب ثقيلاً.
   // يستخدم iframe + form لتجنب مشاكل CORS مع Google Apps Script على الموبايل والمتصفحات.
   if (!REGISTRATION_EMAIL_WEBAPP_URL) return;
-  // ✅ FIX: استعمل أسماء الحقول الصحيحة الموجودة فعلياً بالفورم
-  const childFullName = ((payload.firstName || '') + ' ' + (payload.familyName || '')).trim();
   const emailPayload = {
     requestId: payload.requestId || payload.firebaseKey || '',
-    childName: childFullName || payload.name || payload.firstName || '',
-    childFirstName: payload.firstName || '',
+    childName: payload.firstName || payload.name || '',
     familyName: payload.familyName || '',
-    childNameEnglish: payload.childNameEnglish || '',
-    dob: payload.dob || '',
-    gender: payload.gen || '',
-    nationality: payload.nat || '',
-    motherName: payload.momFull || '',
-    motherMobile: payload.momMob || '',
-    fatherName: payload.dadFull || '',
-    fatherMobile: payload.dadMob || '',
-    emergencyName: payload.emergName || '',
-    emergencyRelation: payload.emergRel || '',
-    emergencyMobile: payload.emergMob || '',
-    address: payload.addr || '',
-    emiratesId: payload.emiratesId || '',
+    motherName: payload.mom || payload.motherName || '',
+    fatherName: payload.dad || payload.fatherName || '',
+    phone: payload.mph || payload.dph || payload.emergMob || '',
     submittedAt: payload.submittedAt || payload.timestamp || new Date().toISOString(),
     source: payload.source || 'parent_registration_link'
   };

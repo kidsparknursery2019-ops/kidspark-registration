@@ -438,13 +438,31 @@ async function sendRegistrationEmailNotification(payload) {
   // إشعار مستقل بعد نجاح حفظ الطلب في Firebase. لا نرسل الصور حتى لا يصبح الطلب ثقيلاً.
   // يستخدم iframe + form لتجنب مشاكل CORS مع Google Apps Script على الموبايل والمتصفحات.
   if (!REGISTRATION_EMAIL_WEBAPP_URL) return;
+  // ✅ FIX 2026-04-30: نرسل كل الحقول بأسمائها الفعلية ليطلعوا بالإيميل صح
   const emailPayload = {
     requestId: payload.requestId || payload.firebaseKey || '',
-    childName: payload.firstName || payload.name || '',
+    // اسم الطفل الكامل
+    firstName: payload.firstName || '',
     familyName: payload.familyName || '',
-    motherName: payload.mom || payload.motherName || '',
-    fatherName: payload.dad || payload.fatherName || '',
-    phone: payload.mph || payload.dph || payload.emergMob || '',
+    childName: ((payload.firstName || '') + ' ' + (payload.familyName || '')).trim() || payload.name || '',
+    childNameEnglish: payload.childNameEnglish || '',
+    // بيانات الطفل
+    dob: payload.dob || '',
+    gen: payload.gen || '',
+    nat: payload.nat || '',
+    emiratesId: payload.emiratesId || '',
+    addr: payload.addr || '',
+    // الأم
+    momFull: payload.momFull || '',
+    momMob: payload.momMob || '',
+    // الأب
+    dadFull: payload.dadFull || '',
+    dadMob: payload.dadMob || '',
+    // الطوارئ
+    emergName: payload.emergName || '',
+    emergRel: payload.emergRel || '',
+    emergMob: payload.emergMob || '',
+    // البيانات الإدارية
     submittedAt: payload.submittedAt || payload.timestamp || new Date().toISOString(),
     source: payload.source || 'parent_registration_link'
   };

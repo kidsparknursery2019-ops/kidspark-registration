@@ -438,13 +438,26 @@ async function sendRegistrationEmailNotification(payload) {
   // إشعار مستقل بعد نجاح حفظ الطلب في Firebase. لا نرسل الصور حتى لا يصبح الطلب ثقيلاً.
   // يستخدم iframe + form لتجنب مشاكل CORS مع Google Apps Script على الموبايل والمتصفحات.
   if (!REGISTRATION_EMAIL_WEBAPP_URL) return;
+  // ✅ FIX: استعمل أسماء الحقول الصحيحة الموجودة فعلياً بالفورم
+  const childFullName = ((payload.firstName || '') + ' ' + (payload.familyName || '')).trim();
   const emailPayload = {
     requestId: payload.requestId || payload.firebaseKey || '',
-    childName: payload.firstName || payload.name || '',
+    childName: childFullName || payload.name || payload.firstName || '',
+    childFirstName: payload.firstName || '',
     familyName: payload.familyName || '',
-    motherName: payload.mom || payload.motherName || '',
-    fatherName: payload.dad || payload.fatherName || '',
-    phone: payload.mph || payload.dph || payload.emergMob || '',
+    childNameEnglish: payload.childNameEnglish || '',
+    dob: payload.dob || '',
+    gender: payload.gen || '',
+    nationality: payload.nat || '',
+    motherName: payload.momFull || '',
+    motherMobile: payload.momMob || '',
+    fatherName: payload.dadFull || '',
+    fatherMobile: payload.dadMob || '',
+    emergencyName: payload.emergName || '',
+    emergencyRelation: payload.emergRel || '',
+    emergencyMobile: payload.emergMob || '',
+    address: payload.addr || '',
+    emiratesId: payload.emiratesId || '',
     submittedAt: payload.submittedAt || payload.timestamp || new Date().toISOString(),
     source: payload.source || 'parent_registration_link'
   };

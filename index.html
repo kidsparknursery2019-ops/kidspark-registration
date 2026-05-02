@@ -54,13 +54,13 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
     </div>
   </div>
 
-  <form id="regForm">
+  <form id="regForm" novalidate>
     <div class="card"><div class="sec">بيانات الطفل | Child Information</div><div class="body grid">
       <div><label>إسم الطفل | Child Name <span class="req">*</span></label><input name="firstName" required></div>
       <div><label>إسم العائلة | Family Name <span class="req">*</span></label><input name="familyName" required></div>
       <div class="full"><label>اسم الطفل باللغة الإنجليزية | Child Name in English <span class="req">*</span></label><input name="childNameEnglish" dir="ltr" required></div>
       <div><label>تاريخ الميلاد | Date of Birth <span class="req">*</span></label><input type="date" name="dob" required></div>
-      <div><label>الجنس | Gender <span class="req">*</span></label><select name="gen" required><option value="">اختيار</option><option>ذكر</option><option>انثى</option></select></div>
+      <div><label>الجنس | Gender <span class="req">*</span></label><select name="gen" required><option value="">اختيار | Select</option><option>ذكر</option><option>انثى</option></select></div>
       <div><label>الجنسية | Nationality <span class="req">*</span></label><select name="nat" required><option value="">اختيار الجنسية | Select Nationality</option>
         <option value="آيسلندا">آيسلندا - Iceland</option>
         <option value="أذربيجان">أذربيجان - Azerbaijan</option>
@@ -254,7 +254,7 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
         <option value="هايتي">هايتي - Haiti</option>
         <option value="هندوراس">هندوراس - Honduras</option>
         <option value="هولندا">هولندا - Netherlands</option>
-      </select><div class="hint">تظهر القائمة بالعربي والإنجليزي، لكن تُحفظ الجنسية بالعربي فقط داخل النظام.</div></div>
+      </select></div>
       <div><label>رقم الهوية | Emirates ID <span class="req">*</span></label><input name="emiratesId" dir="ltr" inputmode="numeric" maxlength="15" pattern="[0-9]{15}" title="رقم الهوية يجب أن يكون 15 رقم بالضبط" required><div class="hint">يجب إدخال 15 رقم بالضبط بدون مسافات أو شرطات.</div></div>
       <div><label>رقم جواز السفر | Passport No</label><input name="passport" dir="ltr"></div>
       <div><label>الديانة | Religion</label><input name="religion"></div>
@@ -299,7 +299,7 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
       <div><label>هاتف المنزل | Home Tel</label><input name="dadHome" dir="ltr"></div>
       <div><label>المهنة | Occupation</label><input name="dadJob"></div>
       <div><label>جهة العمل | Work Location</label><input name="dadWork"></div>
-      <div><label>البريد الإلكتروني | E-mail</label><input type="email" name="dadEmail" dir="ltr"></div>
+      <div><label>البريد الإلكتروني للأب | Father E-mail <span class="req">*</span></label><input type="email" name="dadEmail" dir="ltr" required></div>
       <div class="full"><label>اللغة الأم | Mother Tongue</label><div class="lang-options">
         <label class="lang-option"><input type="radio" name="dadMotherTongue" value="عربي"> عربي</label>
         <label class="lang-option"><input type="radio" name="dadMotherTongue" value="English"> English</label>
@@ -313,16 +313,16 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
       <div><label>اسم قريب للطوارئ | Emergency Contact <span class="req">*</span></label><input name="emergName" required></div>
       <div><label>صلة القرابة | Relationship <span class="req">*</span></label><input name="emergRel" required></div>
       <div><label>رقم الموبايل | Mobile Number <span class="req">*</span></label><input name="emergMob" dir="ltr" required></div>
-      <div><label>هل يعاني الطفل من مرض معدي؟ <span class="req">*</span></label><select name="contagious" required><option value="">اختيار</option><option>لا</option><option>نعم</option></select></div>
-      <div><label>هل خضع لعملية/حادث خطير؟ <span class="req">*</span></label><select name="surgical" required><option value="">اختيار</option><option>لا</option><option>نعم</option></select></div>
-      <div><label>هل لديه حساسية؟ <span class="req">*</span></label><select name="allergy" required><option value="">اختيار</option><option>لا</option><option>نعم</option></select></div>
-      <div class="full"><label>تفاصيل صحية أو حساسية | Medical Notes <span class="req">*</span></label><textarea name="allergyNote" required></textarea></div>
+      <div><label>هل يعاني الطفل من مرض معدي؟ | Does the child have a contagious disease? <span class="req">*</span></label><select name="contagious" required><option value="">اختيار | Select</option><option>لا | No</option><option>نعم | Yes</option></select></div>
+      <div><label>هل خضع لعملية/حادث خطير؟ | Has the child had surgery or a serious accident? <span class="req">*</span></label><select name="surgical" required><option value="">اختيار | Select</option><option>لا | No</option><option>نعم | Yes</option></select></div>
+      <div><label>هل لديه حساسية؟ | Does the child have allergies? <span class="req">*</span></label><select name="allergy" required><option value="">اختيار | Select</option><option>لا | No</option><option>نعم | Yes</option></select></div>
+      <div class="full"><label>تفاصيل صحية أو حساسية | Medical Notes / Health Details <span class="req">*</span></label><textarea name="allergyNote" required></textarea></div>
     </div></div>
 
     <div class="card"><div class="sec">الموافقات والوثائق | Consents & Documents</div><div class="body grid">
-      <div><label>أوافق على تصوير طفلي لتوثيق أنشطة الحضانة</label><select name="photoConsent"><option>نعم</option><option>لا</option></select></div>
-      <div><label>أوافق على نشر الصور في وسائل التواصل</label><select name="socialConsent"><option>لا</option><option>نعم</option></select></div>
-      <div><label>صورة الطفل | Child Photo <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgChildPhoto" required><div class="hint">إلزامي — سيتم ضغط الصورة وحفظها داخل الطلب بدون Firebase Storage</div></div>
+      <div><label>أوافق على تصوير طفلي لتوثيق أنشطة الحضانة | I agree to my child being photographed for nursery activities</label><select name="photoConsent"><option>نعم | Yes</option><option>لا | No</option></select></div>
+      <div><label>أوافق على نشر الصور في وسائل التواصل | I agree to publishing photos on social media</label><select name="socialConsent"><option>لا | No</option><option>نعم | Yes</option></select></div>
+      <div><label>صورة الطفل | Child Photo <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgChildPhoto" required></div>
       <div><label>الهوية الإماراتية للطفل | Child Emirates ID <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgEmiratesId" required></div>
       <div><label>شهادة التطعيم | Vaccination Card <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgVaccination" required></div>
       <div><label>شهادة الميلاد | Birth Certificate <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgBirthCert" required></div>
@@ -330,10 +330,10 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
       <div><label>صورة هوية الأب | Father Emirates ID <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgFatherEmiratesId" required></div>
       <div><label>صورة جواز سفر الأب | Father Passport Copy <span class="req">*</span></label><input type="file" accept="image/*" data-img="imgFatherPassport" required></div>
       <div class="full"><label>ملاحظات إضافية | Comments</label><textarea name="notes"></textarea></div>
-      <div class="full small">بالضغط على إرسال، أقرّ بصحة البيانات وأوافق على إرسال الطلب إلى حضانة حديقة الأطفال لمراجعته.</div>
-      <div class="full actions"><button type="submit" class="primary" id="submitBtn">إرسال الطلب | Submit</button><button type="reset" class="secondary">مسح النموذج</button></div>
-      <div class="full msg ok" id="okMsg">✅ تم إرسال طلب التسجيل بنجاح. ستتواصل الحضانة معكم بعد مراجعة الطلب.</div>
-      <div class="full msg err" id="errMsg">تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.</div>
+      
+      <div class="full actions"><button type="submit" class="primary" id="submitBtn">إرسال الطلب | Submit</button><button type="reset" class="secondary">مسح النموذج | Clear Form</button></div>
+      <div class="full msg ok" id="okMsg">✅ تم إرسال طلب التسجيل بنجاح. ستتواصل الحضانة معكم بعد مراجعة الطلب. | Registration submitted successfully. The nursery will contact you after reviewing the request.</div>
+      <div class="full msg err" id="errMsg">تعذر إرسال الطلب، يرجى المحاولة مرة أخرى. | Unable to submit the request. Please try again.</div>
     </div></div>
   </form>
 </div>
@@ -341,9 +341,9 @@ button{border:0;border-radius:8px;padding:12px 24px;font-family:Tajawal,Arial,sa
 <div class="success-popup-overlay" id="successPopup">
   <div class="success-popup-box" id="successPopupBox">
     <div class="success-popup-icon" id="successPopupIcon">✅</div>
-    <div class="success-popup-title" id="successPopupTitle">تم إرسال الطلب بنجاح</div>
+    <div class="success-popup-title" id="successPopupTitle">تم إرسال الطلب بنجاح | Registration submitted successfully</div>
     <div class="success-popup-sub" id="successPopupSub">Registration submitted successfully</div>
-    <div class="success-popup-text" id="successPopupText">تم استلام طلب التسجيل وسيظهر في نظام الحضانة للمراجعة.</div>
+    <div class="success-popup-text" id="successPopupText">تم استلام طلب التسجيل وسيظهر في نظام الحضانة للمراجعة. | Your registration request has been received and will appear in the nursery system for review.</div>
     <button type="button" class="success-popup-btn" onclick="hideSubmitPopup()">حسناً | OK</button>
   </div>
 </div>
@@ -395,9 +395,17 @@ function normalizeOtherLanguageFields(obj) {
   });
 }
 
-function compressImage(file, maxW=650, quality=.42) {
+function getFileFieldLabel(input) {
+  const label = input.closest('div')?.querySelector('label');
+  return (label ? label.textContent : input.dataset.img || 'المرفق').replace('*','').trim();
+}
+
+function compressImage(file, fieldName, maxW=650, quality=.42) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve('');
+    if (file.type && !file.type.startsWith('image/')) {
+      return reject(new Error('المرفق التالي ليس صورة: ' + fieldName + ' — يرجى اختيار صورة واضحة بصيغة JPG أو PNG.'));
+    }
     const reader = new FileReader();
     reader.onload = e => {
       const img = new Image();
@@ -409,10 +417,10 @@ function compressImage(file, maxW=650, quality=.42) {
         canvas.getContext('2d').drawImage(img,0,0,w,h);
         resolve(canvas.toDataURL('image/jpeg', quality));
       };
-      img.onerror = () => reject(new Error('تعذر قراءة إحدى الصور، يرجى اختيار صورة أخرى'));
+      img.onerror = () => reject(new Error('تعذر قراءة المرفق التالي: ' + fieldName + ' — يرجى إعادة تصويره أو رفع صورة JPG/PNG واضحة والمحاولة مرة أخرى.'));
       img.src = e.target.result;
     };
-    reader.onerror = () => reject(new Error('تعذر قراءة الصورة التالية: {fieldName} — يرجى إعادة رفع هذه الصورة والمحاولة مرة أخرى'));
+    reader.onerror = () => reject(new Error('تعذر تحميل المرفق التالي: ' + fieldName + ' — يرجى إعادة رفع هذا المرفق والمحاولة مرة أخرى.'));
     reader.readAsDataURL(file);
   });
 }
@@ -424,11 +432,35 @@ async function collectImages(obj, requestId) {
   obj.imageStorage = false;
   obj.imageMode = 'base64_compressed';
   obj.imageUrls = {};
+  obj.imageMeta = {};
+  obj.images = {};
+  obj.attachments = [];
   for (const input of inputs) {
-    if (input.files && input.files[0]) {
-      const dataUrl = await compressImage(input.files[0], 650, .42);
+    const fieldName = getFileFieldLabel(input);
+    const file = input.files && input.files[0];
+    if (input.required && !file) {
+      input.focus();
+      throw new Error('يرجى رفع المرفق المطلوب: ' + fieldName);
+    }
+    if (file) {
+      const dataUrl = await compressImage(file, fieldName, 650, .42);
       obj[input.dataset.img] = dataUrl;
       obj.imageUrls[input.dataset.img] = dataUrl;
+      obj.images[input.dataset.img] = dataUrl;
+      obj.imageMeta[input.dataset.img] = {
+        label: fieldName,
+        fileName: file.name || '',
+        fileType: file.type || '',
+        fileSize: file.size || 0
+      };
+      obj.attachments.push({
+        key: input.dataset.img,
+        label: fieldName,
+        fileName: file.name || '',
+        fileType: file.type || '',
+        fileSize: file.size || 0,
+        dataUrl: dataUrl
+      });
     }
   }
   return obj;
@@ -505,12 +537,47 @@ async function sendRegistrationEmailNotification(payload) {
     console.warn('Registration email notification failed:', notifyError);
   }
 }
+
+function validateRequiredFields(form) {
+  const requiredFields = Array.from(form.querySelectorAll('input[required], select[required], textarea[required]'));
+  for (const field of requiredFields) {
+    const fieldName = field.type === 'file' ? getFileFieldLabel(field) : getFieldLabel(field);
+    if (field.type === 'file') {
+      if (!field.files || !field.files.length) {
+        field.focus();
+        throw new Error('يرجى رفع المرفق المطلوب: ' + fieldName);
+      }
+      continue;
+    }
+    if (!(field.value || '').trim()) {
+      field.focus();
+      throw new Error('يرجى تعبئة الحقل المطلوب: ' + fieldName);
+    }
+    if (field.type === 'email' && !field.checkValidity()) {
+      field.focus();
+      throw new Error('يرجى إدخال بريد إلكتروني صحيح في الحقل: ' + fieldName);
+    }
+  }
+}
+
+function getFieldLabel(field) {
+  const label = field.closest('div')?.querySelector('label');
+  return (label ? label.textContent : field.name || 'الحقل').replace('*','').trim();
+}
+
 document.getElementById('regForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const btn = document.getElementById('submitBtn');
   const ok = document.getElementById('okMsg');
   const err = document.getElementById('errMsg');
   ok.style.display = 'none'; err.style.display = 'none';
+  try { validateRequiredFields(this); } catch(validationError) {
+    const msg = validationError && validationError.message ? validationError.message : 'يرجى تعبئة الحقول المطلوبة.';
+    err.textContent = msg;
+    err.style.display = 'block';
+    showSubmitPopup('error','يرجى إكمال الطلب','Please complete the form', msg);
+    return;
+  }
   btn.classList.add('disabled'); btn.textContent = '⏳ جاري الإرسال...';
   try {
     const emiratesInput = this.querySelector('[name=emiratesId]');
@@ -531,7 +598,8 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
     });
     if (!res.ok) {
       const details = await res.text().catch(()=> '');
-      throw new Error('تعذر الحفظ في Firebase: HTTP ' + res.status + (details ? ' - ' + details.slice(0,120) : ''));
+      console.warn('Firebase save failed:', res.status, details);
+      throw new Error('تعذر إرسال الطلب حالياً. يرجى التأكد من الاتصال بالإنترنت والمحاولة مرة أخرى.');
     }
     await res.json().catch(()=>null);
     await sendRegistrationEmailNotification(payload);
@@ -542,7 +610,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
     window.scrollTo({top:0,behavior:'smooth'});
   } catch(ex) {
     console.error(ex);
-    const msg = ex && ex.message ? ex.message : 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى.';
+    const msg = ex && ex.message ? ex.message : 'تعذر إرسال الطلب، يرجى المحاولة مرة أخرى. | Unable to submit the request. Please try again.';
     err.textContent = msg;
     err.style.display = 'block';
     showSubmitPopup('error','تعذر إرسال الطلب','Submission failed', msg);

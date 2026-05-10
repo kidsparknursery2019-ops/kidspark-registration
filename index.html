@@ -619,5 +619,423 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
   }
 });
 </script>
-</body>
+
+<script id="kp-edit-pending-registration-request-20260510">
+(function(){
+  if (window.__kpEditPendingRegistrationRequest20260510) return;
+  window.__kpEditPendingRegistrationRequest20260510 = true;
+  var editingKey = '';
+  var editingOriginal = null;
+  var editingFolder = 'pending';
+  var editingSourceKey = '';
+
+  function t(ar,en){ return ar + ' | ' + en; }
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function norm(v){ return clean(v).toLowerCase(); }
+  function digits(v){ return clean(v).replace(/\D+/g,''); }
+  function msg(text, isErr){ var el=document.getElementById('kp-edit-request-msg'); if(el){ el.textContent=text; el.style.color=isErr?'#c0392b':'#147a43'; } }
+  function field(name){ return document.querySelector('[name="'+name+'"]'); }
+  function value(name){ var el=field(name); return el ? clean(el.value) : ''; }
+  function setValue(name,val){ var el=field(name); if(!el || el.type === 'file') return; el.value = val == null ? '' : String(val); try{ el.dispatchEvent(new Event('change',{bubbles:true})); }catch(_e){} }
+  function requestEmail(r){ return [r.dadEmail,r.fatherEmail,r.momEmail,r.motherEmail,r.parentEmail,r.email].map(norm).filter(Boolean); }
+  function requestName(r){ return norm(((r.firstName||'')+' '+(r.familyName||'')).trim() || r.name || r.childName || r.studentName); }
+  function formName(){ return norm((value('firstName') + ' ' + value('familyName')).trim() || value('name')); }
+  function isEditableRequest(r){ var st=norm(r && r.status || 'pending'); return !st || st === 'pending' || st === 'new' || st === 'rejected' || st === 'reject' || st === '?????' || st === '???'; }
+  function rowKey(k,r){ return clean(r && (r.firebaseKey || r.requestId || r.key)) || clean(k); }
+  function currentLookup(){ return {email:norm(value('dadEmail') || value('momEmail') || value('parentEmail') || value('email')), emiratesId:digits(value('emiratesId')), name:formName()}; }
+  function matchesLookup(r, lookup){
+    if(!isEditableRequest(r)) return false;
+    var hasEmail = lookup.email && requestEmail(r).indexOf(lookup.email) >= 0;
+    var hasId = lookup.emiratesId && digits(r.emiratesId || r.idNo || r.identity || r.studentIdentity) === lookup.emiratesId;
+    var hasName = lookup.name && requestName(r) === lookup.name;
+    return !!(hasEmail && (hasId || hasName));
+  }
+  function populateForm(r){
+    Object.keys(r||{}).forEach(function(k){ setValue(k, r[k]); });
+    if(r.name && (!value('firstName') || !value('familyName'))){
+      var parts=String(r.name).trim().split(/\s+/); if(parts.length){ if(!value('firstName')) setValue('firstName',parts[0]); if(!value('familyName')) setValue('familyName',parts.slice(1).join(' ')); }
+    }
+  }
+  function injectPanel(){
+    var form=document.getElementById('regForm'); if(!form || document.getElementById('kp-edit-request-panel')) return;
+    var panel=document.createElement('div');
+    panel.id='kp-edit-request-panel';
+    panel.className='card';
+    panel.innerHTML='<div class="sec">تعديل طلب سابق | Modify Submitted Request</div><div class="body"><p style="margin-top:0;font-weight:700;color:#38624c">إذا قمت بإرسال طلب سابق ولم تتم مراجعته بعد، اكتب بريد ولي الأمر ورقم الهوية أو اسم الطالب في النموذج ثم اضغط تحميل الطلب. سيتم تحديث نفس الطلب بدون إنشاء طلب مكرر.<br><span dir="ltr">If you already submitted a request and it is still pending, enter the parent email plus Emirates ID or child name in the form, then load it here. The same request will be updated without duplication.</span></p><div class="actions"><button type="button" class="primary" id="kp-load-existing-request">تحميل طلب سابق | Load Existing Request</button><button type="button" id="kp-clear-edit-request">إرسال كطلب جديد | Submit as New</button></div><div id="kp-edit-request-msg" style="font-weight:800;margin-top:10px"></div></div>';
+    form.parentNode.insertBefore(panel, form);
+    document.getElementById('kp-load-existing-request').onclick=loadExisting;
+    document.getElementById('kp-clear-edit-request').onclick=function(){ editingKey=''; editingOriginal=null; editingFolder='pending'; editingSourceKey=''; msg(t('سيتم إرسال الطلب كطلب جديد.','The form will be submitted as a new request.'),false); };
+  }
+  async function loadExisting(){
+    try{
+      var lookup=currentLookup();
+      if(!lookup.email || (!lookup.emiratesId && !lookup.name)){ msg(t('يرجى إدخال بريد ولي الأمر مع رقم الهوية أو اسم الطالب أولاً.','Please enter parent email with Emirates ID or child name first.'),true); return; }
+      msg(t('جاري البحث عن الطلب السابق...','Searching for existing request...'),false);
+      var folders=['pending','rejected'];
+      var found=null;
+      for (var fi=0; fi<folders.length && !found; fi++){
+        var folder=folders[fi];
+        var url=FB_URL + '/registrationRequests/' + folder + '.json';
+        var res=await fetch(url,{cache:'no-store'});
+        if(!res.ok) throw new Error('Firebase '+res.status);
+        var data=await res.json()||{};
+        Object.keys(data).forEach(function(k){ var r=data[k]||{}; if(!found && matchesLookup(r,lookup)) found={key:rowKey(k,r),sourceKey:k,row:r,folder:folder}; });
+      }
+      if(!found){ editingKey=''; editingOriginal=null; msg(t('لم يتم العثور على طلب سابق مطابق وقيد المراجعة.','No matching pending or rejected request was found.'),true); return; }
+      editingKey=found.key; editingSourceKey=found.sourceKey || found.key; editingOriginal=found.row; editingFolder=found.folder || 'pending'; populateForm(found.row);
+      msg(t('تم تحميل الطلب السابق. يمكنك تعديل البيانات ثم الضغط على تحديث الطلب.',(editingFolder === 'rejected' ? 'Rejected request loaded. Correct the details, then resubmit for review.' : 'Existing request loaded. Edit the details, then press Update Request.')),false);
+      var btn=document.getElementById('submitBtn'); if(btn) btn.textContent=t('تحديث الطلب','Update Request');
+    }catch(e){ msg((e&&e.message)||String(e),true); }
+  }
+  function fileExistingValue(key){ var r=editingOriginal||{}; return r[key] || (r.imageUrls&&r.imageUrls[key]) || (r.images&&r.images[key]) || ''; }
+  async function collectImagesPreserve(obj, requestId){
+    var inputs=Array.from(document.querySelectorAll('input[type=file][data-img]'));
+    obj.requestId=requestId; obj.firebaseKey=requestId; obj.imageStorage=false; obj.imageMode='base64_compressed';
+    obj.imageUrls=Object.assign({}, editingOriginal&&editingOriginal.imageUrls || {});
+    obj.imageMeta=Object.assign({}, editingOriginal&&editingOriginal.imageMeta || {});
+    obj.images=Object.assign({}, editingOriginal&&editingOriginal.images || {});
+    obj.attachments=Array.isArray(editingOriginal&&editingOriginal.attachments) ? editingOriginal.attachments.slice() : [];
+    for(const input of inputs){
+      var key=input.dataset.img, label=getFileFieldLabel(input), file=input.files&&input.files[0], existing=fileExistingValue(key);
+      if(input.required && !file && !existing){ input.focus(); throw new Error('يرجى رفع المرفق المطلوب: '+label); }
+      if(file){
+        var dataUrl=await compressImage(file,label,650,.42);
+        obj[key]=dataUrl; obj.imageUrls[key]=dataUrl; obj.images[key]=dataUrl;
+        obj.imageMeta[key]={label:label,fileName:file.name||'',fileType:file.type||'',fileSize:file.size||0,updatedAt:new Date().toISOString()};
+        obj.attachments=obj.attachments.filter(function(a){return a&&a.key!==key;});
+        obj.attachments.push({key:key,label:label,fileName:file.name||'',fileType:file.type||'',fileSize:file.size||0,dataUrl:dataUrl});
+      } else if(existing){ obj[key]=existing; }
+    }
+    return obj;
+  }
+  function validateForFinalSubmit(form){
+    var fields=Array.from(form.querySelectorAll('input[required], select[required], textarea[required]'));
+    for(const f of fields){
+      var label=f.type==='file'?getFileFieldLabel(f):getFieldLabel(f);
+      if(f.type==='file'){
+        var key=f.dataset.img;
+        if((!f.files||!f.files.length) && !fileExistingValue(key)){ f.focus(); throw new Error('يرجى رفع المرفق المطلوب: '+label); }
+      } else if(!clean(f.value)){ f.focus(); throw new Error('يرجى تعبئة الحقل المطلوب: '+label); }
+      if(f.type==='email' && !f.checkValidity()){ f.focus(); throw new Error('يرجى إدخال بريد إلكتروني صحيح في الحقل: '+label); }
+    }
+  }
+  async function finalSubmit(e){
+    e.preventDefault(); e.stopImmediatePropagation();
+    var form=document.getElementById('regForm'), btn=document.getElementById('submitBtn'), ok=document.getElementById('okMsg'), err=document.getElementById('errMsg');
+    if(ok) ok.style.display='none'; if(err) err.style.display='none';
+    var externalCtx = window.__kpRegistrationEditContext || null;
+    if(!editingKey && externalCtx && externalCtx.key){ editingKey=externalCtx.key; editingSourceKey=externalCtx.sourceKey||externalCtx.key; editingFolder=externalCtx.folder||'pending'; editingOriginal=externalCtx.row||editingOriginal; }
+    try{ validateForFinalSubmit(form); }catch(ex){ if(err){err.textContent=ex.message;err.style.display='block';} showSubmitPopup('error','يرجى إكمال الطلب','Please complete the form',ex.message); return; }
+    btn.classList.add('disabled'); btn.textContent= editingKey ? '⏳ جاري تحديث الطلب...' : '⏳ جاري الإرسال...';
+    try{
+      var emiratesInput=form.querySelector('[name=emiratesId]'), emiratesValue=clean(emiratesInput&&emiratesInput.value);
+      if(!/^\d{15}$/.test(emiratesValue)){ emiratesInput.focus(); throw new Error('رقم الهوية يجب أن يكون 15 رقم بالضبط'); }
+      var requestId=editingKey || ('req_'+Date.now()+'_'+Math.random().toString(36).slice(2,8));
+      var payload=formToObject(form);
+      payload=await collectImagesPreserve(payload,requestId);
+      if(editingOriginal){ payload.createdAt=editingOriginal.createdAt||editingOriginal.submittedAt||editingOriginal.timestamp||payload.timestamp; payload.submittedAt=editingOriginal.submittedAt||payload.createdAt; payload.timestamp=editingOriginal.timestamp||payload.submittedAt; payload.editCount=(Number(editingOriginal.editCount)||0)+1; payload.lastEditedAt=new Date().toISOString(); payload.updatedAt=payload.lastEditedAt; payload.source=editingFolder === 'rejected' ? 'parent_registration_resubmission' : 'parent_registration_update'; payload.previousStatus=editingOriginal.status || editingFolder; payload.status='pending'; payload.resubmittedAt=editingFolder === 'rejected' ? new Date().toISOString() : (editingOriginal.resubmittedAt || ''); }
+      var res=await fetch(REQUESTS_URL+'/'+encodeURIComponent(requestId)+'.json',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),cache:'no-store'});
+      if(!res.ok) throw new Error('???? ??? ????? ??????. ???? ?????? ?? ??????? ????????? ????????? ??? ????.');
+      await res.json().catch(function(){return null;});
+      if(typeof window.kpCleanupRejectedRegistrationForPayload === 'function') await window.kpCleanupRejectedRegistrationForPayload(payload);
+      if(editingFolder === 'rejected'){
+        var delKeys = [requestId, editingSourceKey, editingOriginal && editingOriginal.firebaseKey, editingOriginal && editingOriginal.requestId, editingOriginal && editingOriginal.key].map(clean).filter(Boolean);
+        delKeys = Array.from(new Set(delKeys));
+        await Promise.all(delKeys.map(function(k){ return fetch(FB_URL + '/registrationRequests/rejected/' + encodeURIComponent(k) + '.json', {method:'DELETE', cache:'no-store'}).catch(function(){}); }));
+      }
+      await sendRegistrationEmailNotification(payload);
+      form.reset(); editingKey=''; editingOriginal=null; editingFolder='pending'; editingSourceKey=''; window.__kpRegistrationEditContext=null; try{localStorage.removeItem('kp_registration_edit_context')}catch(_e){};
+      if(ok){ ok.textContent='✅ تم حفظ طلب التسجيل بنجاح | Registration request saved successfully'; ok.style.display='block'; }
+      showSubmitPopup('success','تم حفظ الطلب بنجاح','Request saved successfully','تم حفظ طلب التسجيل وسيظهر في نظام الحضانة للمراجعة.');
+      var submitBtn=document.getElementById('submitBtn'); if(submitBtn) submitBtn.textContent='إرسال الطلب | Submit';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(ex){ if(err){ err.textContent=(ex&&ex.message)||String(ex); err.style.display='block'; } showSubmitPopup('error','تعذر حفظ الطلب','Save failed',(ex&&ex.message)||String(ex)); }
+    finally{ btn.classList.remove('disabled'); btn.textContent='إرسال الطلب | Submit'; }
+  }
+  document.addEventListener('DOMContentLoaded',function(){ injectPanel(); var form=document.getElementById('regForm'); if(form) form.addEventListener('submit',finalSubmit,true); });
+})();
+</script>
+<script id="kp-clean-registration-edit-ui-20260510">
+(function(){
+  if (window.__kpCleanRegistrationEditUi20260510) return;
+  window.__kpCleanRegistrationEditUi20260510 = true;
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function norm(v){ return clean(v).toLowerCase(); }
+  function digits(v){ return clean(v).replace(/\D+/g,''); }
+  function formField(name){ return document.querySelector('[name="'+name+'"]'); }
+  function setVal(name,val){ var el=formField(name); if(el && el.type !== 'file') el.value = val == null ? '' : String(val); }
+  function reqEmail(r){ return [r.dadEmail,r.fatherEmail,r.momEmail,r.motherEmail,r.parentEmail,r.email].map(norm).filter(Boolean); }
+  function reqName(r){ return norm(((r.firstName||'')+' '+(r.familyName||'')).trim() || r.name || r.childName || r.studentName); }
+  function isEditable(r){ var st=norm(r && r.status || 'pending'); return !st || st==='pending' || st==='new' || st==='rejected' || st==='reject' || st==='مرفوض' || st==='رفض'; }
+  function keyOf(k,r){ return clean(r && (r.firebaseKey || r.requestId || r.key)) || clean(k); }
+  function populate(r){ Object.keys(r||{}).forEach(function(k){ setVal(k,r[k]); }); if(r.name && (!clean(formField('firstName')&&formField('firstName').value) || !clean(formField('familyName')&&formField('familyName').value))){ var p=String(r.name).trim().split(/\s+/); if(p.length){ setVal('firstName',p[0]); setVal('familyName',p.slice(1).join(' ')); } } }
+  function ensureModal(){
+    if(document.getElementById('kp-edit-lookup-ov')) return;
+    document.body.insertAdjacentHTML('beforeend','<div id="kp-edit-lookup-ov" style="display:none;position:fixed;inset:0;background:rgba(20,55,35,.45);z-index:99999;align-items:center;justify-content:center;padding:16px"><div style="background:#fff;border-radius:22px;max-width:560px;width:100%;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.22);direction:rtl"><h2 style="margin:0 0 8px;color:#147a43">تعديل طلب سابق</h2><div style="color:#5a6f62;font-weight:700;margin-bottom:14px">يمكن تعديل الطلب إذا كان لا يزال قيد المراجعة أو تم رفضه وطلبت الإدارة تصحيح البيانات.</div><label style="font-weight:900;color:#147a43">بريد ولي الأمر</label><input id="kp-edit-email" type="email" dir="ltr" style="width:100%;padding:12px;border:1.5px solid #cde7d7;border-radius:12px;margin:6px 0 12px"><label style="font-weight:900;color:#147a43">رقم الهوية الإماراتية أو اسم الطالب</label><input id="kp-edit-identity" style="width:100%;padding:12px;border:1.5px solid #cde7d7;border-radius:12px;margin:6px 0 12px"><div id="kp-edit-lookup-msg" style="font-weight:800;min-height:22px;margin-bottom:10px"></div><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap"><button type="button" id="kp-edit-close" style="border:1.5px solid #2a8b54;background:#fff;color:#2a8b54;border-radius:12px;padding:10px 16px;font-weight:900">إغلاق | Close</button><button type="button" id="kp-edit-load" style="border:0;background:#2a8b54;color:#fff;border-radius:12px;padding:10px 16px;font-weight:900">تحميل الطلب | Load Request</button></div></div></div>');
+    document.getElementById('kp-edit-close').onclick=function(){ document.getElementById('kp-edit-lookup-ov').style.display='none'; };
+    document.getElementById('kp-edit-load').onclick=loadFromModal;
+  }
+  function setLookupMsg(text,err){ var el=document.getElementById('kp-edit-lookup-msg'); if(el){ el.textContent=text; el.style.color=err?'#c0392b':'#147a43'; } }
+  function openModal(){ ensureModal(); document.getElementById('kp-edit-email').value=clean((formField('dadEmail')&&formField('dadEmail').value)||(formField('momEmail')&&formField('momEmail').value)); document.getElementById('kp-edit-identity').value=clean((formField('emiratesId')&&formField('emiratesId').value)||((formField('firstName')&&formField('firstName').value)+' '+(formField('familyName')&&formField('familyName').value))); setLookupMsg('',false); document.getElementById('kp-edit-lookup-ov').style.display='flex'; }
+  function setupButton(){
+    var old=document.getElementById('kp-edit-request-panel'); if(old) old.style.display='none';
+    if(document.getElementById('kp-clean-edit-btn')) return;
+    var submit=document.getElementById('submitBtn'); if(!submit) return;
+    var btn=document.createElement('button'); btn.type='button'; btn.id='kp-clean-edit-btn'; btn.textContent='تعديل طلب سابق | Modify previous request'; btn.style.cssText='border:1.5px solid #2a8b54;background:#fff;color:#2a8b54;border-radius:14px;padding:12px 18px;font-weight:900'; btn.onclick=openModal;
+    var form=document.getElementById('regForm'); if(form && form.firstElementChild){ form.insertBefore(btn, form.firstElementChild); btn.style.margin='0 0 14px 0'; btn.style.width='100%'; } else { submit.parentNode.insertBefore(btn, submit); }
+  }
+  async function loadFromModal(){
+    try{
+      var email=norm(document.getElementById('kp-edit-email').value), ident=clean(document.getElementById('kp-edit-identity').value), identDigits=digits(ident), identName=norm(ident);
+      if(!email || !ident){ setLookupMsg('يرجى إدخال البريد مع رقم الهوية أو اسم الطالب | Please enter email plus ID or child name',true); return; }
+      setLookupMsg('جاري البحث... | Searching...',false);
+      var found=null, folders=['pending','rejected'];
+      for(var i=0;i<folders.length && !found;i++){
+        var folder=folders[i];
+        var res=await fetch(FB_URL + '/registrationRequests/' + folder + '.json',{cache:'no-store'});
+        if(!res.ok) throw new Error('Firebase '+res.status);
+        var data=await res.json()||{};
+        Object.keys(data).forEach(function(k){ var r=data[k]||{}; if(found || !isEditable(r)) return; var emailOk=reqEmail(r).indexOf(email)>=0; var idOk=identDigits && digits(r.emiratesId || r.idNo || r.identity || r.studentIdentity)===identDigits; var nameOk=identName && reqName(r)===identName; if(emailOk && (idOk||nameOk)) found={key:keyOf(k,r),folder:folder,row:r}; });
+      }
+      if(!found){ setLookupMsg('لم يتم العثور على طلب مطابق قابل للتعديل | No editable matching request found',true); return; }
+      populate(found.row);
+      window.__kpRegistrationEditContext = {key:found.key, sourceKey:found.sourceKey || found.key, folder:found.folder, row:found.row};
+      try{ localStorage.setItem('kp_registration_edit_context', JSON.stringify(window.__kpRegistrationEditContext)); }catch(_e){}
+      var msg=document.getElementById('kp-edit-request-msg'); if(msg){ msg.textContent = found.folder==='rejected' ? 'تم تحميل طلب مرفوض. بعد الحفظ سيعود لقائمة المراجعة.' : 'تم تحميل طلب قيد المراجعة.'; msg.style.color='#147a43'; }
+      var submit=document.getElementById('submitBtn'); if(submit) submit.textContent = found.folder==='rejected' ? 'إعادة إرسال الطلب | Resubmit Request' : 'تحديث الطلب | Update Request';
+      document.getElementById('kp-edit-lookup-ov').style.display='none';
+      window.scrollTo({top:document.getElementById('regForm').offsetTop-20,behavior:'smooth'});
+    }catch(e){ setLookupMsg((e&&e.message)||String(e),true); }
+  }
+  document.addEventListener('DOMContentLoaded',function(){ setupButton(); ensureModal(); });
+})();
+</script>
+<script id="kp-registration-load-aliases-20260510">
+(function(){
+  if (window.__kpRegistrationLoadAliases20260510) return;
+  window.__kpRegistrationLoadAliases20260510 = true;
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function pick(r, keys){ r=r||{}; for(var i=0;i<keys.length;i++){ var v=r[keys[i]]; if(v!=null && clean(v)!=='') return v; } return ''; }
+  function splitName(full){ var p=clean(full).split(/\s+/).filter(Boolean); return {first:p[0]||'', family:p.slice(1).join(' ')}; }
+  function el(name){ return document.querySelector('[name="'+name+'"]'); }
+  function setField(name, value){
+    value = clean(value);
+    if(!value) return;
+    var nodes = Array.from(document.querySelectorAll('[name="'+name+'"]'));
+    if(!nodes.length) return;
+    var first = nodes[0];
+    if(first.type === 'radio'){
+      var exact = nodes.find(function(n){ return clean(n.value).toLowerCase() === value.toLowerCase(); });
+      if(exact){ exact.checked = true; return; }
+      var other = nodes.find(function(n){ return clean(n.value).toLowerCase() === 'other'; });
+      if(other){ other.checked = true; var target=other.getAttribute('data-other-target'); if(target) setField(target,value); }
+      return;
+    }
+    if(first.tagName === 'SELECT'){
+      var opts=Array.from(first.options||[]);
+      var opt=opts.find(function(o){ return clean(o.value).toLowerCase() === value.toLowerCase() || clean(o.textContent).toLowerCase() === value.toLowerCase(); });
+      if(opt) first.value=opt.value; else first.value=value;
+    } else if(first.type !== 'file') {
+      first.value = value;
+    }
+    try{ first.dispatchEvent(new Event('input',{bubbles:true})); first.dispatchEvent(new Event('change',{bubbles:true})); }catch(_e){}
+  }
+  function applyAliases(r){
+    r = r || {};
+    var full = pick(r,['name','studentName','childName','arabicName','fullName']);
+    if(!pick(r,['firstName']) && full) setField('firstName', splitName(full).first);
+    if(!pick(r,['familyName']) && full) setField('familyName', splitName(full).family);
+    var map = {
+      firstName:['firstName','first','childFirstName'],
+      familyName:['familyName','lastName','surname','family'],
+      childNameEnglish:['childNameEnglish','nameEn','englishName','studentEnglishName','nameEnglish'],
+      dob:['dob','birthDate','dateOfBirth','birth_date'],
+      gen:['gen','gender','sex'],
+      nat:['nat','nationality'],
+      emiratesId:['emiratesId','idNo','identity','studentIdentity','eid','emiratesID'],
+      passport:['passport','passportNo','passportNumber'],
+      religion:['religion'],
+      motherTongue:['motherTongue','language','firstLanguage'],
+      otherLanguages:['otherLanguages','secondLanguage','languages'],
+      addr:['addr','address','homeAddress','fullAddress'],
+      momFull:['momFull','motherName','mom','motherFullName'],
+      momMob:['momMob','mph','motherPhone','momPhone','motherMobile'],
+      momNat:['momNat','motherNationality'],
+      momHome:['momHome','motherHome','motherHomePhone'],
+      momJob:['momJob','motherJob','momOccupation'],
+      momWork:['momWork','motherWork','motherWorkLocation'],
+      momEmail:['momEmail','motherEmail','mother_email','emailMother'],
+      momMotherTongue:['momMotherTongue','motherMotherTongue','motherLanguage'],
+      dadFull:['dadFull','fatherName','dad','fatherFullName'],
+      dadMob:['dadMob','dph','fatherPhone','dadPhone','fatherMobile'],
+      dadNat:['dadNat','fatherNationality'],
+      dadHome:['dadHome','fatherHome','fatherHomePhone'],
+      dadJob:['dadJob','job','fatherJob','dadOccupation'],
+      dadWork:['dadWork','fatherWork','fatherWorkLocation'],
+      dadEmail:['dadEmail','fatherEmail','father_email','emailFather'],
+      dadMotherTongue:['dadMotherTongue','fatherMotherTongue','fatherLanguage'],
+      emergName:['emergName','emergencyName','emergencyContact','emergencyPerson'],
+      emergRel:['emergRel','emergencyRelation','emergencyRel'],
+      emergMob:['emergMob','emergencyPhone','emergencyMobile','emergencyContactPhone'],
+      contagious:['contagious','hasContagiousDisease','infectiousDisease'],
+      surgery:['surgery','seriousAccident','hadSurgery'],
+      allergy:['allergy','hasAllergy','allergies'],
+      health:['health','healthDetails','medicalNotes','medicalStatus','healthStatus'],
+      photoConsent:['photoConsent','photoPermission','allowPhoto'],
+      socialConsent:['socialConsent','socialMediaConsent','allowSocial'],
+      notes:['notes','note','comments','remarks']
+    };
+    Object.keys(map).forEach(function(name){ setField(name, pick(r,map[name])); });
+  }
+  var previousContext = null;
+  function install(){
+    var timer = setInterval(function(){
+      var ctx = window.__kpRegistrationEditContext;
+      if(ctx && ctx !== previousContext && ctx.row){ previousContext = ctx; setTimeout(function(){ applyAliases(ctx.row); }, 60); }
+    }, 300);
+    setTimeout(function(){ clearInterval(timer); }, 120000);
+  }
+  document.addEventListener('DOMContentLoaded', install);
+})();
+</script>
+<script id="kp-registration-attachment-indicators-20260510">
+(function(){
+  if (window.__kpRegistrationAttachmentIndicators20260510) return;
+  window.__kpRegistrationAttachmentIndicators20260510 = true;
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function existingAttachment(row, key){
+    row = row || {};
+    return row[key] || (row.imageUrls && row.imageUrls[key]) || (row.images && row.images[key]) || (Array.isArray(row.attachments) && (row.attachments.find(function(a){ return a && a.key === key; }) || {}).dataUrl) || '';
+  }
+  function labelForInput(input){ try { return getFileFieldLabel(input); } catch(_e){ return input && input.dataset ? input.dataset.img : 'Attachment'; } }
+  function renderAttachmentIndicators(row){
+    row = row || {};
+    document.querySelectorAll('.kp-existing-attachment-note').forEach(function(n){ n.remove(); });
+    Array.from(document.querySelectorAll('input[type=file][data-img]')).forEach(function(input){
+      var key = input.dataset.img;
+      var val = existingAttachment(row, key);
+      if(!val) return;
+      var note = document.createElement('div');
+      note.className = 'kp-existing-attachment-note';
+      note.style.cssText = 'margin-top:6px;padding:8px 10px;border:1px dashed #9fd5b7;border-radius:10px;background:#f4fff8;color:#147a43;font-weight:800;font-size:13px';
+      note.innerHTML = '📎 مرفق سابق موجود | Existing attachment available<br><span style="font-weight:600;color:#5a6f62">اتركي الحقل فارغاً للاحتفاظ به، أو ارفعي ملفاً جديداً لاستبداله.<br><span dir="ltr">Leave empty to keep it, or upload a new file to replace it.</span></span>';
+      input.insertAdjacentElement('afterend', note);
+    });
+  }
+  var previousContext = null;
+  function watch(){
+    var timer = setInterval(function(){
+      var ctx = window.__kpRegistrationEditContext;
+      if(ctx && ctx !== previousContext && ctx.row){ previousContext = ctx; setTimeout(function(){ renderAttachmentIndicators(ctx.row); }, 120); }
+    }, 300);
+    setTimeout(function(){ clearInterval(timer); }, 120000);
+  }
+  document.addEventListener('DOMContentLoaded', watch);
+})();
+</script>
+<script id="kp-registration-view-existing-attachments-20260510">
+(function(){
+  if (window.__kpRegistrationViewExistingAttachments20260510) return;
+  window.__kpRegistrationViewExistingAttachments20260510 = true;
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function existingAttachment(row, key){
+    row = row || {};
+    var direct = row[key] || (row.imageUrls && row.imageUrls[key]) || (row.images && row.images[key]) || '';
+    if(direct) return {data:direct, name:key};
+    if(Array.isArray(row.attachments)){
+      var a = row.attachments.find(function(x){ return x && x.key === key; });
+      if(a) return {data:a.dataUrl || a.data || a.fileData || a.url || '', name:a.fileName || a.name || key, type:a.fileType || a.type || ''};
+    }
+    return null;
+  }
+  function dataUrlToBlobUrl(dataUrl){
+    try{
+      if(!/^data:/i.test(dataUrl)) return dataUrl;
+      var parts = dataUrl.split(',');
+      var mime = (parts[0].match(/data:([^;]+)/)||[])[1] || 'application/octet-stream';
+      var bin = atob(parts[1] || '');
+      var bytes = new Uint8Array(bin.length);
+      for(var i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
+      return URL.createObjectURL(new Blob([bytes], {type:mime}));
+    }catch(e){ return dataUrl; }
+  }
+  window.kpOpenExistingRegistrationAttachment = function(key){
+    var ctx = window.__kpRegistrationEditContext || {};
+    var att = existingAttachment(ctx.row, key);
+    if(!att || !att.data){ alert('لا يوجد مرفق محفوظ لهذا الحقل.'); return; }
+    var url = dataUrlToBlobUrl(att.data);
+    var w = window.open(url, '_blank');
+    if(!w){
+      var a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener'; a.download=att.name||'attachment'; document.body.appendChild(a); a.click(); a.remove();
+    }
+    if(String(url).indexOf('blob:')===0) setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(_e){} }, 60000);
+  };
+  function renderViewButtons(){
+    var ctx = window.__kpRegistrationEditContext || {};
+    if(!ctx.row) return;
+    Array.from(document.querySelectorAll('input[type=file][data-img]')).forEach(function(input){
+      var key=input.dataset.img;
+      var note=input.parentElement && input.parentElement.querySelector('.kp-existing-attachment-note');
+      if(!note || note.querySelector('.kp-view-existing-attachment')) return;
+      if(!existingAttachment(ctx.row,key)) return;
+      var btn=document.createElement('button');
+      btn.type='button';
+      btn.className='kp-view-existing-attachment';
+      btn.textContent='عرض المرفق | View attachment';
+      btn.style.cssText='margin-top:8px;border:1.5px solid #2a8b54;background:#fff;color:#2a8b54;border-radius:10px;padding:7px 10px;font-weight:900;cursor:pointer';
+      btn.onclick=function(){ window.kpOpenExistingRegistrationAttachment(key); };
+      note.appendChild(document.createElement('br'));
+      note.appendChild(btn);
+    });
+  }
+  var lastCtx=null;
+  document.addEventListener('DOMContentLoaded',function(){
+    var timer=setInterval(function(){
+      var ctx=window.__kpRegistrationEditContext;
+      if(ctx && ctx.row && ctx!==lastCtx){ lastCtx=ctx; setTimeout(renderViewButtons, 180); }
+      else if(ctx && ctx.row) renderViewButtons();
+    },500);
+    setTimeout(function(){ clearInterval(timer); },120000);
+  });
+})();
+</script>
+<script id="kp-registration-rejected-content-cleanup-20260510">
+(function(){
+  if (window.__kpRegistrationRejectedContentCleanup20260510) return;
+  window.__kpRegistrationRejectedContentCleanup20260510 = true;
+  function clean(v){ return String(v == null ? '' : v).trim(); }
+  function norm(v){ return clean(v).toLowerCase(); }
+  function digits(v){ return clean(v).replace(/\D+/g,''); }
+  function emails(r){ return [r&&r.dadEmail,r&&r.fatherEmail,r&&r.momEmail,r&&r.motherEmail,r&&r.parentEmail,r&&r.email].map(norm).filter(Boolean); }
+  function fullName(r){ return norm(((r&&r.firstName||'')+' '+(r&&r.familyName||'')).trim() || (r&&r.name) || (r&&r.childName) || (r&&r.studentName)); }
+  function sameRequest(a,b){
+    var ae=emails(a), be=emails(b), emailOk=ae.some(function(x){ return be.indexOf(x)>=0; });
+    var aid=digits(a&&a.emiratesId || a&&a.idNo || a&&a.identity), bid=digits(b&&b.emiratesId || b&&b.idNo || b&&b.identity);
+    if(aid && bid && aid===bid) return true;
+    var an=fullName(a), bn=fullName(b);
+    if(emailOk && an && bn && an===bn) return true;
+    return false;
+  }
+  async function cleanupRejectedForPayload(payload){
+    try{
+      var res=await fetch(FB_URL + '/registrationRequests/rejected.json',{cache:'no-store'});
+      if(!res.ok) return;
+      var data=await res.json()||{};
+      var deletes=[];
+      Object.keys(data).forEach(function(k){ if(sameRequest(payload,data[k]||{})) deletes.push(k); });
+      await Promise.all(deletes.map(function(k){ return fetch(FB_URL + '/registrationRequests/rejected/' + encodeURIComponent(k) + '.json',{method:'DELETE',cache:'no-store'}).catch(function(){}); }));
+    }catch(e){ console.warn('Rejected registration cleanup failed:', e); }
+  }
+  window.kpCleanupRejectedRegistrationForPayload = cleanupRejectedForPayload;
+  var originalNotify = window.sendRegistrationEmailNotification;
+  if(typeof originalNotify === 'function' && !originalNotify.__kpRejectedCleanupWrapped){
+    var wrapped = async function(payload){
+      if(payload && (payload.previousStatus === 'rejected' || payload.source === 'parent_registration_resubmission')) await cleanupRejectedForPayload(payload);
+      return originalNotify.apply(this, arguments);
+    };
+    wrapped.__kpRejectedCleanupWrapped = true;
+    window.sendRegistrationEmailNotification = sendRegistrationEmailNotification = wrapped;
+  }
+})();
+</script></body>
 </html>
